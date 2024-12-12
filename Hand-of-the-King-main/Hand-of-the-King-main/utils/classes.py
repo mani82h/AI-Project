@@ -15,7 +15,6 @@ class Card:
 
         self.house = house
         self.name = name
-        self.house_name = 'Baratheon' if name == 'Joffrey' else house
         self.location = location
     
     def get_house(self):
@@ -37,16 +36,6 @@ class Card:
         '''
 
         return self.name
-    
-    def get_house_name(self):
-        '''
-        This function returns the house name of the card.
-
-        Returns:
-            house_name (str): the house name of the card
-        '''
-
-        return self.house_name
     
     def get_location(self):
         '''
@@ -122,7 +111,7 @@ class Player:
             card (Card): the card to add to the player
         '''
 
-        self.cards[card.get_house_name()].append(card)
+        self.cards[card.get_house()].append(card)
     
     def get_house_banner(self, house):
         '''
