@@ -74,7 +74,7 @@ def heuristic(player, opponent, cards, varys_location, weights):
         location = card.get_location()
 
         # Check if capturing this card would secure a banner
-        if banners.get(house, 0) <  house_priority.get(house, 3) :
+        if banners.get(house) <  house_priority.get(house) :
             score += weights["capture_banner_bonus"]
 
         # Row and column priority
@@ -142,6 +142,17 @@ def minimax(player1, player2, cards, depth, alpha, beta, player, weights):
         current_player1_status = copy.deepcopy(player1)
         current_player2_status = copy.deepcopy(player2)
 
+        card_to_move = next((c for c in cards if c.get_location() == moves), None)
+
+        # Skip move if the player has more than half of the house's cards
+        if card_to_move:
+            house = card_to_move.get_house()
+            total_house_cards = sum(1 for c in cards if c.get_house() == house)
+            player_banners = player1.get_banners() if player == 1 else player2.get_banners()
+            if player_banners.get(house, 0) >= (total_house_cards // 2) + 1:
+                continue  # Skip this move since more than half the cards are already secured
+
+        # Make the move
         if player == 1:
             make_move(cards, moves, player1)
         else:
@@ -169,28 +180,6 @@ def minimax(player1, player2, cards, depth, alpha, beta, player, weights):
         return [move, alpha]
     else:
         return [move, beta]
-
-def calculate_winner(player1, player2):
-    '''
-    Determine the winner of the game.
-
-    Parameters:
-        player1 (Player): Player 1.
-        player2 (Player): Player 2.
-
-    Returns:
-        int: 1 if Player 1 wins, 2 if Player 2 wins.
-    '''
-    player1_banners = sum(player1.get_banners().values())
-    player2_banners = sum(player2.get_banners().values())
-
-    if player1_banners > player2_banners:
-        return 1
-    elif player2_banners > player1_banners:
-        return 2
-    else:
-        # Tiebreaker: Latest move wins (assume turn-based tracking)
-        return 1 if player1.get_last_move_time() > player2.get_last_move_time() else 2
 
 def get_move(cards, player1, player2):
     '''
