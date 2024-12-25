@@ -25,8 +25,12 @@ house_member_count = {
 weights = {
     "capture_banner_bonus": 10.0,  # High priority for securing banners
     "row_col_priority": 5.0,       # Moderate priority for row/column moves
-    "general_banner_weight": 2.0   # Low priority for general banner count
+    "general_banner_weight": 2.0,   # Low priority for general banner count
+    "house_variance": 2.0 
 }
+
+house_name_values = {'Stark': 1, 'Greyjoy': 2, 'Lannister': 3, 'Targaryen': 4, 'Baratheon': 5, 'Tyrell': 6, 'Tully': 7}
+house_name_keys = {1: 'Stark', 2: 'Greyjoy', 3: 'Lannister', 4: 'Targaryen', 5: 'Baratheon', 6: 'Tyrell', 7: 'Tully'}
 
 def find_varys(cards):
     varys = [card for card in cards if card.get_name() == 'Varys']
@@ -48,6 +52,56 @@ def get_neighbors(location, row_size=6):
             neighbors.append(row * row_size + c)
 
     return neighbors
+
+def cards_position(cards): # return each cards position, a dictonary containing with key: house, value: cards of that house
+    cards_location = {}
+
+    for i in range(len(cards)):
+        if cards[i].get_name() == 'Varys':
+            continue
+        
+        x = cards[i].get_location() // 6
+        y = cards[i].get_location() % 6
+        card_house = house_name_values[cards[i].get_house()]
+
+        if card_house not in cards_location:
+            cards_location[card_house] = [(x, y)]
+        else:
+            cards_location[card_house].append((x, y))
+
+    return cards_location
+
+def cards_variance_based_on_axis(cards_location, axis=0):
+    variance_of_cards_location = {}
+
+    for i in range(1, 8):
+        if i in cards_location:
+            card = cards_location[i]
+
+            axis_values = [pos[axis] for pos in card]
+            avg = sum(axis_values) / len(axis_values)
+            variance = sum((value - avg) ** 2 for value in axis_values) / len(axis_values)
+
+            variance_of_cards_location[i] = variance
+    
+    return variance_of_cards_location
+
+def house_weights(cards): # house weights based on axis variance
+    cards_location = cards_position(cards)
+    cards_axis_0 = cards_variance_based_on_axis(cards_location, 0)
+    cards_axis_1 = cards_variance_based_on_axis(cards_location, 1)
+
+    alpha = 10.0
+
+    for i in range(1, 8):
+        house = house_name_keys[i]
+        if i in cards_axis_0 and i in cards_axis_1 and cards_axis_0[i] != 0 and cards_axis_1[i] != 0:
+            house_priority[house] = alpha / cards_axis_0[i] * cards_axis_1[i]
+        
+        elif (i in cards_axis_0 and cards_axis_0[i] == 0) or (i in cards_axis_1 and cards_axis_1[i] == 0):
+            house_priority[house] = 10e2
+
+    return house_priority
 
 def heuristic(player, opponent, cards, varys_location):
     banners = player.get_banners()
@@ -78,6 +132,10 @@ def heuristic(player, opponent, cards, varys_location):
 
         # General banner count
         score += banners.get(house, 0) * weights["general_banner_weight"]
+
+        score += house_priority[house] * weights["house_variance"]
+
+        # we definitely need a heuristic for blocking opponent moves
 
     return score
 
@@ -150,7 +208,9 @@ def get_move(cards, player1, player2):
         move (int): The move of the player.
     '''
 
-    limit = 3 # Depth limit
+    house_priority = house_weights(cards)
+
+    limit = 4 # Depth limit
     
     player1_copy = copy.deepcopy(player1)
     player2_copy = copy.deepcopy(player2)
