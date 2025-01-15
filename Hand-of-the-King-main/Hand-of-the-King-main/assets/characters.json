@@ -50,5 +50,37 @@
     ],
     "No House": [
         "Varys"
-    ]
+    ],
+    "Companion": {
+        "Jon": {
+            "Row": 0,
+            "Column": 6,
+            "Choice": 1
+        },
+        "Gendry": {
+            "Row": 0,
+            "Column": 7.5,
+            "Choice": 0
+        },
+        "Ramsay": {
+            "Row": 2,
+            "Column": 6,
+            "Choice": 2
+        },
+        "Sandor": {
+            "Row": 2,
+            "Column": 7.5,
+            "Choice": 1
+        },
+        "Jaqen": {
+            "Row": 4,
+            "Column": 6,
+            "Choice": 3
+        },
+        "Melisandre": {
+            "Row": 4,
+            "Column": 7.5,
+            "Choice": 0
+        }
+    }
 }

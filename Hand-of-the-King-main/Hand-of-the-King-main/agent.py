@@ -202,21 +202,36 @@ def minimax(player1, player2, cards, depth, alpha, beta, player):
     else:
         return [move, beta]
 
-def get_move(cards, player1, player2):
-    '''
-    This function gets the move of the player.
+def get_move(cards, player1, player2, companion_cards=None, choose_companion=True):
+ 
+    # Depth limit for minimax
+    limit = 5
 
-    Parameters:
-        cards (list): List of Card objects.
-        player1 (Player): The player.
-        player2 (Player): The opponent.
+    # Handle companion card logic if required
+    if choose_companion and companion_cards:
+        # Evaluate each companion card move
+        best_score = -inf
+        best_move = None
 
-    Returns:
-        move (int): The move of the player.
-    '''
+        for companion in companion_cards.keys():
+            # Create a simulated move for this companion card
+            current_cards = copy.deepcopy(cards)
+            current_player1 = copy.deepcopy(player1)
+            current_player2 = copy.deepcopy(player2)
 
-    limit = 5 # Depth limit
-    
+            # Simulate the companion card action
+            move = [companion]
+            make_companion_move(current_cards, companion_cards, move, current_player1)
+
+            # Evaluate the board state after using the companion card
+            score = getScore(current_cards, current_player1, current_player2, turn=1)
+            if score > best_score:
+                best_score = score
+                best_move = move
+
+        return best_move
+
+    # Handle regular move logic
     player1_copy = copy.copy(player1)
     player2_copy = copy.copy(player2)
 
