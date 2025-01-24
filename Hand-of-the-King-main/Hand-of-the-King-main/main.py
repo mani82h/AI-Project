@@ -637,7 +637,7 @@ def validate_agent_move(moves, companion_cards, given_move):
     
     return True # All checks passed
 
-def try_get_move(agent, cards, player1, player2, companion_cards, choose_companion=False):
+def try_get_move(agent, cards, player1, player2, companion_cards, choose_companion):
     '''
     This function tries to get the move from the AI agent.
 
@@ -779,7 +779,7 @@ def main(args):
             
             else:
                 # Get the move from the AI agent
-                move = try_get_move(player1_agent, cards, player1, player2, companion_cards if choose_companion else None)
+                move = try_get_move(player1_agent, cards, player1, player2, companion_cards, choose_companion)
 
                 # If the move is None, change the turn
                 if move is None:
@@ -793,24 +793,22 @@ def main(args):
             
             else:
                 # Get the move from the AI agent
-                move = try_get_move(player2_agent, cards, player1, player2, companion_cards if choose_companion else None)
+                move = try_get_move(player2_agent, cards, player1, player2, companion_cards, choose_companion)
 
                 # If the move is None, change the turn
                 if move is None:
                     turn = 1
         
         # If the move is companion card
-        if choose_companion and isinstance(move, list) and len(move) > 0:
+        if choose_companion:
             # Check if the move is valid
             if move[0] in companion_cards.keys():
                 choices = companion_cards[move[0]]['Choice'] # Number of choices for the companion card
 
-                # Remove the companion card from the list
-                del companion_cards[move[0]]
-
                 # If the player is human, get the selected cards
                 if (turn == 1 and player1_agent is None) or (turn == 2 and player2_agent is None):
                     selectable_cards = [] # List to hold the selectable cards
+                    selectable_companion_cards = {key: value for key, value in companion_cards.items() if key != move[0]} # Dictionary to hold the selectable companion cards
 
                     for card in cards:
                         if card.get_name() == 'Varys' and move[0] == 'Ramsay': # Ramsay can change the location of two cards
@@ -828,13 +826,13 @@ def main(args):
 
                         # Draw the board
                         if turn == 1:
-                            pygraphics.draw_board(board, cards, companion_cards, footer_text, companion_selecting_condition)
+                            pygraphics.draw_board(board, cards, selectable_companion_cards, footer_text, companion_selecting_condition)
                         
                         else:
-                            pygraphics.draw_board(board, cards, companion_cards, footer_text, companion_selecting_condition)
+                            pygraphics.draw_board(board, cards, selectable_companion_cards, footer_text, companion_selecting_condition)
 
                         # Wait for the player to make a move with the mouse
-                        selected = pygraphics.get_player_move(selectable_cards, companion_cards if companion_selecting_condition else None)
+                        selected = pygraphics.get_player_move(selectable_cards, selectable_companion_cards if companion_selecting_condition else None)
 
                         if not companion_selecting_condition:
                             selectable_cards.remove(selected) # Remove the selected card from the list
@@ -843,6 +841,9 @@ def main(args):
 
                 elif not validate_agent_move(moves, companion_cards, move):
                     continue
+
+                # Remove the companion card from the list
+                del companion_cards[move[0]]
 
                 # Make the companion move
                 is_house = make_companion_move(cards, companion_cards, move, player1 if turn == 1 else player2)
