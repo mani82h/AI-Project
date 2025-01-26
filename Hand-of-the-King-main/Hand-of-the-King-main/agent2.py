@@ -1,5 +1,4 @@
 import random
-import json
 import os
 import copy
 from collections import defaultdict
@@ -14,7 +13,7 @@ houses = ["Stark", "Greyjoy", "Lannister",
 # Configuration parameters
 LEARNING_RATE = 0.8
 DISCOUNT_FACTOR = 0.9
-Q_TABLE_FILE = "q_table.json"
+Q_TABLE_FILE = "q_table.txt"
 
 # Heuristic weights configuration
 weights = {
@@ -42,18 +41,19 @@ class ReinforcementLearningAgent:
         self.move_history = []
 
     def load_q_table(self):
+        q_table = defaultdict(lambda: defaultdict(float))
         if os.path.exists(Q_TABLE_FILE):
             with open(Q_TABLE_FILE, 'r') as f:
-                data = json.load(f)
-                return defaultdict(lambda: defaultdict(float),
-                                   {k: defaultdict(float, v) for k, v in data.items()})
-        return defaultdict(lambda: defaultdict(float))
+                for line in f:
+                    state_key, move, value = line.strip().split(',')
+                    q_table[state_key][move] = float(value)
+        return q_table
 
     def save_q_table(self):
-        # Convert defaultdict to regular dict for JSON serialization
-        save_data = {k: dict(v) for k, v in self.q_table.items()}
         with open(Q_TABLE_FILE, 'w') as f:
-            json.dump(save_data, f)
+            for state_key, moves in self.q_table.items():
+                for move, value in moves.items():
+                    f.write(f"{state_key},{move},{value}\n")
 
     def get_state_key(self, cards, player1, player2):
         state = []
@@ -209,9 +209,10 @@ def find_varys(cards):
     return None
 
 
-def get_neighbors(location):
+def get_neighbors(location, cards):
     neighbors = []
-    varys_loc = self.find_varys(cards)
+    varys_loc = find_varys(cards)
+    row, col = location // 6, location % 6
 
     # Check the four possible neighbors (up, down, left, right)
     if row > 0:  # Up
@@ -407,7 +408,23 @@ def select_move(possible_moves, state_key, cards, player1, player2):
     return random.choice(best_moves)
 
 
-def update_state_history(state_key, chosen_move):
-    """Update agent's state history"""
-    get_move.rl_agent.state_history.append(state_key)
-    get_move.rl_agent.move_history.append(chosen_move)
+def record_learning(player1, player2, cards):
+    """Record learning after a game"""
+    final_state_key = get_move.rl_agent.get_state_key(cards, player1, player2)
+    reward = get_move.rl_agent.calculate_reward(player1, player2, None, cards)
+
+    # Update Q-values for all state-action pairs in the history
+    for state_key, move in zip(get_move.rl_agent.state_history, get_move.rl_agent.move_history):
+        get_move.rl_agent.update_q_value(state_key, move, reward)
+
+    # Save the Q-table to a file
+    get_move.rl_agent.save_q_table()
+
+    # Clear history
+    get_move.rl_agent.state_history.clear()
+    get_move.rl_agent.move_history.clear()
+
+    # Save the final state and reward to a text file
+    with open("learning_record.txt", "w") as f:
+        f.write(f"Final State: {final_state_key}\n")
+        f.write(f"Reward: {reward}\n")
