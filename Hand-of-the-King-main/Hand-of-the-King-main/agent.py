@@ -284,7 +284,7 @@ def get_move(cards, player1, player2, companion_cards=None, choose_companion=Tru
 
             for house in current_banners:
                 needed = (house_member_count[house] // 2) + 1
-                if (current_banners.get(house, 0) + 1) >= needed:
+                if (current_banners.get(house, 0) + 1) >= needed and 'Sandor' in companion_weights:
                     companion_weights['Sandor'] += 40  # Use correct key
 
             if "Baratheon" in current_banners and "Baratheon" in opponent_banners:
