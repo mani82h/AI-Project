@@ -639,8 +639,10 @@ def validate_agent_move(cards, companion_cards, given_move):
         elif card.get_name() != 'Varys':
             locations.append(card.get_location())
     
+    loop_size = len(given_move) if given_move[0] != 'Jaqen' else len(given_move) - 1
+    
     # Check if the selected cards are valid
-    for i in range(1, len(given_move)):
+    for i in range(1, loop_size):
         if given_move[i] not in locations:
             return False
         
