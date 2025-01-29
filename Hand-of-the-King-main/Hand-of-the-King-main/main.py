@@ -406,7 +406,7 @@ def make_companion_move(cards, companion_cards, move, player):
     elif selected_companion == 'Jaqen':
         first_card = move[1]
         second_card = move[2]
-        selected_companion_card = move[3][0]
+        selected_companion_card = move[3]
 
         # Find the selected cards
         first_card = find_card(cards, first_card)
@@ -599,12 +599,12 @@ def print_cards_status(player1_status, player2_status):
     # Print a new line
     print()
 
-def validate_agent_move(moves, companion_cards, given_move):
+def validate_agent_move(cards, companion_cards, given_move):
     '''
     This function validates the move of the AI agent.
 
     Parameters:
-        moves (list): list of possible moves
+        cards (list): list of Card objects
         companion_cards (dict): dictionary of remaining companion cards
         given_move (int): move from the AI agent
 
@@ -623,11 +623,25 @@ def validate_agent_move(moves, companion_cards, given_move):
     if len(given_move) - 1 != choices:
         return False
     
+    # Check if Jaqen is selected with another companion card not himself
+    if given_move[0] == 'Jaqen' and given_move[0] == given_move[-1]:
+        return False
+    
     number_of_occurrences = {} # Dictionary to keep track of the number of occurrences of the selected locations
+
+    # Get all possible locations
+    locations = []
+
+    for card in cards:
+        if card.get_name() == 'Varys' and given_move[0] == 'Ramsay':
+            locations.append(card.get_location())
+        
+        elif card.get_name() != 'Varys':
+            locations.append(card.get_location())
     
     # Check if the selected cards are valid
     for i in range(1, len(given_move)):
-        if given_move[i] not in moves:
+        if given_move[i] not in locations:
             return False
         
         if given_move[i] in number_of_occurrences.keys():
@@ -836,10 +850,13 @@ def main(args):
 
                         if not companion_selecting_condition:
                             selectable_cards.remove(selected) # Remove the selected card from the list
+                        
+                        else:
+                            selected = selected[0] # Get the selected card
 
                         move.append(selected) # Add the selected card to the list
 
-                elif not validate_agent_move(moves, companion_cards, move):
+                elif not validate_agent_move(cards, companion_cards, move):
                     continue
 
                 # Remove the companion card from the list
