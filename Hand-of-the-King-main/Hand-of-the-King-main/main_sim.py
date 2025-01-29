@@ -680,18 +680,15 @@ def try_get_move(agent, cards, player1, player2, companion_cards, choose_compani
     
     return move
             
-def main(args):
+def main_sim(player1, player2, load=None, save=None, video=None):
     '''
-    This function runs the game.
-
-    Parameters:
-        args (Namespace): command line arguments
+    This function simulate the game.
     '''
 
-    if args.load:
+    if load:
         try:
             # Load the board from the file
-            cards, companion_cards = load_board(args.load)
+            cards, companion_cards = load_board(load)
         
         except FileNotFoundError:
             print("File not found. Creating a new board.")
@@ -701,10 +698,10 @@ def main(args):
         # Create a new board
         cards, companion_cards = make_board()
     
-    if args.save:
+    if save:
         try:
             # Save the board to the file
-            save_board(cards, args.save)
+            save_board(cards, save)
         
         except:
             print("Error saving board.")
@@ -722,13 +719,13 @@ def main(args):
     pygraphics.show_board(2)
 
     # Check if the players are human or AI
-    if args.player1 == 'human':
+    if player1 == 'human':
         player1_agent = None
     
     else:
         # Check if the AI file exists
         try:
-            player1_agent = importlib.import_module(args.player1)
+            player1_agent = importlib.import_module(player1)
         
         except ImportError:
             print("AI file not found.")
@@ -738,13 +735,13 @@ def main(args):
             print("AI file does not have the get_move function.")
             return
     
-    if args.player2 == 'human':
+    if player2 == 'human':
         player2_agent = None
     
     else:
         # Check if the AI file exists
         try:
-            player2_agent = importlib.import_module(args.player2)
+            player2_agent = importlib.import_module(player2)
         
         except ImportError:
             print("AI file not found.")
@@ -755,8 +752,9 @@ def main(args):
             return
     
     # Set up the players
-    player1 = Player(args.player1)
-    player2 = Player(args.player2)
+    player1 = Player(player1) # player1 should always be the simulate guy
+    # player1.load_config_from_file(player1_config_file)
+    player2 = Player(player2)
 
     # Set up the turn
     turn = 1 # 1: player 1's turn, 2: player 2's turn
@@ -928,7 +926,7 @@ def main(args):
     # Close the board
     pygraphics.close_board()
 
-    file_name = args.video # Name of the video file
+    file_name = video # Name of the video file
 
     if file_name is None: # If not provided
         # Set the name of the video file as Agent1_vs_Agent2
@@ -952,5 +950,5 @@ def main(args):
     except:
         print("Error saving video.")
 
-if __name__ == "__main__":
-    main(parser.parse_args())
+# if __name__ == "__main__":
+#     main(parser.parse_args())
