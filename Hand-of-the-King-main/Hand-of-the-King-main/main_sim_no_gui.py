@@ -13,7 +13,7 @@ import copy
 sys.path.append(join(dirname(abspath(__file__)), "utils"))
 
 # Import the utils
-import pygraphics
+# import pygraphics
 from classes import Card, Player
 
 # Set the path of the file
@@ -639,8 +639,10 @@ def validate_agent_move(cards, companion_cards, given_move):
         elif card.get_name() != 'Varys':
             locations.append(card.get_location())
     
+    loop_size = len(given_move) if given_move[0] != 'Jaqen' else len(given_move) - 1
+
     # Check if the selected cards are valid
-    for i in range(1, len(given_move)):
+    for i in range(1, loop_size):
         if given_move[i] not in locations:
             return False
         
@@ -705,18 +707,9 @@ def main_sim(player1, player2, load=None, save=None, video=None):
         
         except:
             print("Error saving board.")
-    
-    # Set up the graphics
-    board = pygraphics.init_board()
 
     # Clear the screen
     clear_screen()
-
-    # Draw the board
-    pygraphics.draw_board(board, cards, companion_cards,  '0', None)
-
-    # Show the initial board for 2 seconds
-    pygraphics.show_board(2)
 
     # Check if the players are human or AI
     if player1 == 'human':
@@ -753,14 +746,10 @@ def main_sim(player1, player2, load=None, save=None, video=None):
     
     # Set up the players
     player1 = Player(player1) # player1 should always be the simulate guy
-    # player1.load_config_from_file(player1_config_file)
     player2 = Player(player2)
 
     # Set up the turn
     turn = 1 # 1: player 1's turn, 2: player 2's turn
-
-    # Draw the board
-    pygraphics.draw_board(board, cards, companion_cards, '1')
 
     # Set Choose Companion flag
     choose_companion = False
@@ -774,42 +763,25 @@ def main_sim(player1, player2, load=None, save=None, video=None):
             # Get the winner of the game
             winner = calculate_winner(player1, player2)
             
-            # Display the winner
-            pygraphics.display_winner(board, winner, player1.get_agent() if winner == 1 else player2.get_agent())
+            results = {'winner': winner, 'player1_banners': player1.get_banners(), 'player2_banners': player2.get_banners()}
+            # make sure you handle things right in genetic.py as well
 
-            # Show the board for 5 seconds
-            pygraphics.show_board(5)
-
-            break
+            return results
 
         # Get the player's move
         if turn == 1:
-            # Check if the player is human or AI
-            if player1_agent is None:
-                # Wait for the player to make a move with the mouse
-                move = pygraphics.get_player_move(moves, companion_cards if choose_companion else None)
-            
-            else:
-                # Get the move from the AI agent
-                move = try_get_move(player1_agent, cards, player1, player2, companion_cards, choose_companion)
+            move = try_get_move(player1_agent, cards, player1, player2, companion_cards, choose_companion)
 
                 # If the move is None, change the turn
-                if move is None:
-                    turn = 2
+            if move is None:
+                turn = 2
         
         else:
-            # Check if the player is human or AI
-            if player2_agent is None:
-                # Wait for the player to make a move with the mouse
-                move = pygraphics.get_player_move(moves, companion_cards if choose_companion else None)
-            
-            else:
-                # Get the move from the AI agent
-                move = try_get_move(player2_agent, cards, player1, player2, companion_cards, choose_companion)
+            move = try_get_move(player2_agent, cards, player1, player2, companion_cards, choose_companion)
 
                 # If the move is None, change the turn
-                if move is None:
-                    turn = 1
+            if move is None:
+                turn = 1
         
         # If the move is companion card
         if choose_companion:
@@ -835,16 +807,6 @@ def main_sim(player1, player2, load=None, save=None, video=None):
 
                         # Set the footer's text
                         footer_text = 'CC' if companion_selecting_condition else f'BC{i + 1}'
-
-                        # Draw the board
-                        if turn == 1:
-                            pygraphics.draw_board(board, cards, selectable_companion_cards, footer_text, companion_selecting_condition)
-                        
-                        else:
-                            pygraphics.draw_board(board, cards, selectable_companion_cards, footer_text, companion_selecting_condition)
-
-                        # Wait for the player to make a move with the mouse
-                        selected = pygraphics.get_player_move(selectable_cards, selectable_companion_cards if companion_selecting_condition else None)
 
                         if not companion_selecting_condition:
                             selectable_cards.remove(selected) # Remove the selected card from the list
@@ -879,16 +841,6 @@ def main_sim(player1, player2, load=None, save=None, video=None):
 
                 choose_companion = False # Reset the flag
 
-            # Draw the board
-            if turn == 1:
-                pygraphics.draw_board(board, cards, companion_cards, '1', choose_companion)
-            
-            else:
-                pygraphics.draw_board(board, cards, companion_cards, '2', choose_companion)
-            
-            # Show the board for 0.5 seconds
-            pygraphics.show_board(0.5)
-
         # Check if the move is valid
         if move in moves:
             # Make the move
@@ -912,43 +864,3 @@ def main_sim(player1, player2, load=None, save=None, video=None):
                 turn = 2 if turn == 1 else 1
 
                 choose_companion = False # Reset the flag
-
-            # Draw the board
-            if turn == 1:
-                pygraphics.draw_board(board, cards, companion_cards, 'CC' if choose_companion else '1', choose_companion)
-            
-            else:
-                pygraphics.draw_board(board, cards, companion_cards, 'CC' if choose_companion else '2', choose_companion)
-            
-            # Show the board for 0.5 seconds
-            pygraphics.show_board(0.5)
-    
-    # Close the board
-    pygraphics.close_board()
-
-    file_name = video # Name of the video file
-
-    if file_name is None: # If not provided
-        # Set the name of the video file as Agent1_vs_Agent2
-        if player1.get_agent() != 'human':
-            file_name = player1.get_agent()[max(0, player1.get_agent().find('/'), player1.get_agent().find('\\')):]
-        
-        else:
-            file_name = player1.get_agent()
-        
-        file_name += '_vs_'
-
-        if player2.get_agent() != 'human':
-            file_name += player2.get_agent()[max(0, player2.get_agent().find('/'), player2.get_agent().find('\\')):]
-        
-        else:
-            file_name += player2.get_agent()
-    
-    try:
-        pygraphics.save_video(file_name) # Save the video of the game
-    
-    except:
-        print("Error saving video.")
-
-# if __name__ == "__main__":
-#     main(parser.parse_args())

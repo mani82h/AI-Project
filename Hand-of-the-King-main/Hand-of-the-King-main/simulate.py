@@ -5,7 +5,8 @@ from config import Config
 from house_utils import house_member_count, houses
 from heuristic_utils import banner_difference_score, who_has_more
 from board_utils import house_variance, house_weight_change, get_neighbors, find_varys
-from main_sim import make_move, get_possible_moves, print_cards_status, set_banners, calculate_winner, make_companion_move
+from main_sim_no_gui import make_move, get_possible_moves, print_cards_status, set_banners, calculate_winner, make_companion_move
+import random
 
 config_set = False
 config = Config()
@@ -114,6 +115,43 @@ def minimax(player1, player2, cards, depth, alpha, beta, player):
     else:
         return [move, beta]
 
+def get_valid_ramsay(cards):
+    '''
+    This function gets the possible moves for Ramsay.
+
+    Parameters:
+        cards (list): list of Card objects
+    
+    Returns:
+        moves (list): list of possible moves
+    '''
+
+    moves=[]
+
+    for card in cards:
+        moves.append(card.get_location())
+    
+    return moves
+
+def get_valid_jon_sandor_jaqan(cards):
+    '''
+    This function gets the possible moves for Jon Snow, Sandor Clegane, and Jaqen H'ghar.
+
+    Parameters:
+        cards (list): list of Card objects
+    
+    Returns:
+        moves (list): list of possible moves
+    '''
+
+    moves=[]
+
+    for card in cards:
+        if card.get_name() != 'Varys':
+            moves.append(card.get_location())
+    
+    return moves
+
 def get_move(cards, player1, player2, companion_cards=None, choose_companion=False):
     global config_set
     if config_set == False:
@@ -121,79 +159,48 @@ def get_move(cards, player1, player2, companion_cards=None, choose_companion=Fal
         config_set = True
 
     # Depth limit for minimax
-    limit = 2
+    limit = 3
 
-    # Handle companion card logic if required
-    if choose_companion and companion_cards:
-        # Evaluate each companion card move
-        best_score = -inf
-        best_move = None
+    # rn choosing companion randomly, later on this should be done better
+    if choose_companion:
+        # Choose a random companion card if available
+        if companion_cards:
+            selected_companion = random.choice(list(companion_cards.keys())) # Randomly select a companion card
+            move = [selected_companion] # Add the companion card to the move list
+            choices = companion_cards[selected_companion]['Choice'] # Get the number of choices required by the companion card
+            
+            # with open('logs.txt', 'w') as f:
+            #     f.write(choices)
 
-        for companion in companion_cards.keys():
-            # Create a simulated move for this companion card
-            current_cards = copy.deepcopy(cards)
-            current_player1 = copy.deepcopy(player1)
-            current_player2 = copy.deepcopy(player2)
+            if choices == 1:  # For cards like Jon Snow
+                move.append(random.choice(get_valid_jon_sandor_jaqan(cards)))
+            
+            elif choices == 2:  # For cards like Ramsay
+                valid_moves = get_valid_ramsay(cards)
 
-            # Simulate the companion card action
-            move = [companion]
-            make_companion_move(current_cards, companion_cards, move, current_player1)
+                if len(valid_moves) >= 2:
+                    move.extend(random.sample(valid_moves, 2))
+                
+                else:
+                    move.extend(valid_moves)  # If not enough moves, just use what's available
+                
+                
+            elif choices == 3:  # Special case for Jaqen with an additional companion card selection
+                valid_moves = get_valid_jon_sandor_jaqan(cards)
 
-            score = getScore(current_cards, current_player1, current_player2, turn=1)
-            if score > best_score:
-                best_score = score
-                best_move = move
-
-        return best_move
+                if len(valid_moves) >= 2 and len(companion_cards) > 0:
+                    move.extend(random.sample(valid_moves, 2))
+                    move.append(random.choice(list(companion_cards.keys())))
+                
+                else:
+                    # If there aren't enough moves or companion cards, just return what's possible
+                    move.extend(valid_moves)
+                    move.append(random.choice(list(companion_cards.keys())) if companion_cards else None)
+        
+            return move
 
     player1_copy = copy.deepcopy(player1)
     player2_copy = copy.deepcopy(player2)
 
     result = minimax(player1_copy, player2_copy, cards, limit, -inf, inf, 1)
     return result[0]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # def get_move(cards, player1, player2):
-    #     '''
-    #     This function gets the move of the player.
-
-    #     Parameters:
-    #         cards (list): List of Card objects.
-    #         player1 (Player): The player.
-    #         player2 (Player): The opponent.
-
-    #     Returns:
-    #         move (int): The move of the player.
-    #     '''
-
-    #     limit = 5 # Depth limit
-        
-    #     player1_copy = copy.copy(player1)
-    #     player2_copy = copy.copy(player2)
-
-    #     result = minimax(player1_copy, player2_copy, cards, limit, -inf, inf, 1)
-    #     return result[0]

@@ -38,3 +38,6 @@ class Config():
     
     def get_weights_dict(self):
         return {name: self.weights[idx] for idx, name in enumerate(self.weight_names)}
+    
+    def set_fitness_score(self, fitness_score):
+        self.fitness_score = fitness_score
