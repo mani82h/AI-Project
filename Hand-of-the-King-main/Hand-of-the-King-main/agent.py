@@ -200,6 +200,11 @@ class ReinforcementLearningAgent:
                 if alpha >= beta:
                     break
             return [best_move, min_score]
+def get_valid_ramsay(cards):
+    return [card.get_location() for card in cards]
+
+def get_valid_jon_sandor_jaqan(cards):
+    return [card.get_location() for card in cards if card.get_name() != 'Varys']
 
 def get_move(cards, player1, player2, companion_cards, choose_companion):
     '''
