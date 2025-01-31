@@ -310,12 +310,10 @@ def get_valid_jon_sandor_jaqan(cards):
 
 def get_move(cards, player1, player2, companion_cards=None, choose_companion=True):
     # Depth limit for minimax
-    limit = 1
+    limit = 3
 
     if choose_companion:
         if companion_cards:
-            # Get banner counts correctly
-            # Assuming this returns {house: count}
             current_banners = player2.get_banners()
             opponent_banners = player1.get_banners()
 
@@ -354,21 +352,6 @@ def get_move(cards, player1, player2, companion_cards=None, choose_companion=Tru
             if 'Gendry' in companion_weights:
                 if current_banners.get("Baratheon", 0) == 2 and opponent_banners.get("Baratheon", 0) == 2:
                     companion_weights['Gendry'] += 1000
-            if 'Jaqen' in companion_weights:
-                # Enemy stronghold calculation
-                enemy_strongholds = [
-                    card.get_location() for card in cards
-                    if
-                    (your_rows[card.get_location()//6] >= needed_to_secure - 1 or
-                     your_cols[card.get_location() % 6] >= needed_to_secure - 1)
-                ]
-                jaqen_weight_boost += 30 * len(enemy_strongholds)
-
-                # Companion synergy bonus
-                if len(companion_cards) >= 2:
-                    jaqen_weight_boost += 40
-
-                companion_weights['Jaqen'] += jaqen_weight_boost
             target_houses = []
             for house in current_banners:
                 needed = (house_member_count[house] // 2) + 1
@@ -397,7 +380,6 @@ def get_move(cards, player1, player2, companion_cards=None, choose_companion=Tru
                         loc for loc in valid_moves
                         if current_houses.get(loc) in target_houses
                     ]
-                    # Fallback to locations needing fewest to secure
                     if not priority_moves:
                         priority_moves = sorted(
                             valid_moves,
@@ -453,15 +435,37 @@ def get_move(cards, player1, player2, companion_cards=None, choose_companion=Tru
                         # Fallback to first two valid moves (non-random)
                         move.extend(valid_moves[:2])
             elif choices == 3:  # Jaqen-style
+                if 'Jaqen' in companion_weights:
+                    enemy_strongholds = [
+                        card.get_location() for card in cards
+                        if (your_rows[card.get_location() // 6] >= needed_to_secure - 1 or
+                            your_cols[card.get_location() % 6] >= needed_to_secure - 1)
+                    ]
+                    jaqen_weight_boost = 30 * len(enemy_strongholds)
+
+                    if len(companion_cards) >= 2:
+                        jaqen_weight_boost += 40
+
+                    companion_weights['Jaqen'] += jaqen_weight_boost
+
                 valid_moves = get_valid_jon_sandor_jaqan(cards)
                 if valid_moves:
-                    move.extend(random.sample(
-                        valid_moves, min(2, len(valid_moves))))
+                    prioritized_moves = [
+                        loc for loc in valid_moves
+                        if any(card.get_location() == loc for card in cards 
+                               if card.get_house() in opponent_banners)
+                    ]
+                    
+                    if len(prioritized_moves) >= 2:
+                        move.extend(prioritized_moves[:2])
+                    else:
+                        move.extend(random.sample(
+                            valid_moves, min(2, len(valid_moves)))
+                        )
             return move
         else:
             return []
 
-    # Rest of regular move logic (unchanged)
     player1_copy = copy.copy(player1)
     player2_copy = copy.copy(player2)
     result = minimax(player1_copy, player2_copy, cards,

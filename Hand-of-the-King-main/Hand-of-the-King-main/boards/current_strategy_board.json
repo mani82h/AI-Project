@@ -1,0 +1,112 @@
+[
+    {
+        "house": "Greyjoy",
+        "name": "Theon",
+        "location": 0
+    },
+    {
+        "house": "No House",
+        "name": "Varys",
+        "location": 7
+    },
+    {
+        "house": "Lannister",
+        "name": "Joffrey",
+        "location": 2
+    },
+    {
+        "house": "Tyrell",
+        "name": "Margaery",
+        "location": 3
+    },
+    {
+        "house": "Greyjoy",
+        "name": "Rodrik",
+        "location": 4
+    },
+    {
+        "house": "Targaryen",
+        "name": "Rhaegar",
+        "location": 6
+    },
+    {
+        "house": "Lannister",
+        "name": "Jaime",
+        "location": 9
+    },
+    {
+        "house": "Baratheon",
+        "name": "Stannis",
+        "location": 10
+    },
+    {
+        "house": "Stark",
+        "name": "Robb",
+        "location": 12
+    },
+    {
+        "house": "Greyjoy",
+        "name": "Balon",
+        "location": 13
+    },
+    {
+        "house": "Lannister",
+        "name": "Tyrion",
+        "location": 14
+    },
+    {
+        "house": "Tyrell",
+        "name": "Garlan",
+        "location": 15
+    },
+    {
+        "house": "Lannister",
+        "name": "Tywin",
+        "location": 16
+    },
+    {
+        "house": "Greyjoy",
+        "name": "Victarion",
+        "location": 21
+    },
+    {
+        "house": "Greyjoy",
+        "name": "Aeron",
+        "location": 24
+    },
+    {
+        "house": "Baratheon",
+        "name": "Shireen",
+        "location": 25
+    },
+    {
+        "house": "Greyjoy",
+        "name": "Euron",
+        "location": 26
+    },
+    {
+        "house": "Stark",
+        "name": "Arya",
+        "location": 27
+    },
+    {
+        "house": "Greyjoy",
+        "name": "Asha",
+        "location": 29
+    },
+    {
+        "house": "Stark",
+        "name": "Bran",
+        "location": 30
+    },
+    {
+        "house": "Stark",
+        "name": "Sansa",
+        "location": 32
+    },
+    {
+        "house": "Baratheon",
+        "name": "Renly",
+        "location": 35
+    }
+]
