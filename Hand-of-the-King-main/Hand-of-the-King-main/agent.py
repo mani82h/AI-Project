@@ -1,7 +1,7 @@
 from math import inf
 import copy
 import random
-from main import make_move, get_possible_moves, print_cards_status, set_banners
+from main import load_board, make_move, get_possible_moves, print_cards_status, save_board, set_banners
 
 houses = ["Stark", "Greyjoy", "Lannister",
           "Targaryen", "Baratheon", "Tyrell", "Tully"]
@@ -310,7 +310,7 @@ def get_valid_jon_sandor_jaqan(cards):
 
 def get_move(cards, player1, player2, companion_cards=None, choose_companion=True):
     # Depth limit for minimax
-    limit = 3
+    limit = 1
 
     if choose_companion:
         if companion_cards:
@@ -369,19 +369,20 @@ def get_move(cards, player1, player2, companion_cards=None, choose_companion=Tru
                     jaqen_weight_boost += 40
 
                 companion_weights['Jaqen'] += jaqen_weight_boost
-
+            target_houses = []
             for house in current_banners:
                 needed = (house_member_count[house] // 2) + 1
                 if (current_banners.get(house, 0) + 1) >= needed:
+                    target_houses.append(house)
                     if 'Jon' in companion_weights: 
-                        companion_weights['Jon'] += 30
+                        companion_weights['Jon'] += 50
+            save_board(cards, 'current_strategy_board')
 
-            # Select companion with highest weight
+        # Load fresh board state to ensure accuracy
+            current_board, _ = load_board('current_strategy_board')
+            location_house_map = {card.get_location(): card.get_house() for card in current_board}            # Select companion with highest weight
             selected_companion = max(
-                companion_weights, key=companion_weights.get, default='Jon')
-
-            if not selected_companion:
-                return []  # Fallback
+                companion_weights, key=companion_weights.get, default=None)
 
             move = [selected_companion]
             choices = companion_cards[selected_companion]['Choice']
@@ -390,7 +391,21 @@ def get_move(cards, player1, player2, companion_cards=None, choose_companion=Tru
             if choices == 1:  # Jon-style
                 valid_moves = get_valid_jon_sandor_jaqan(cards)
                 if valid_moves:
-                    move.append(random.choice(valid_moves))
+                    current_houses = {card.get_location(): card.get_house() for card in cards}
+                    # Prioritize locations that complete house majorities
+                    priority_moves = [
+                        loc for loc in valid_moves
+                        if current_houses.get(loc) in target_houses
+                    ]
+                    # Fallback to locations needing fewest to secure
+                    if not priority_moves:
+                        priority_moves = sorted(
+                            valid_moves,
+                            key=lambda loc: (needed_to_secure - your_rows[loc//6], 
+                                           needed_to_secure - your_cols[loc%6])
+                        )
+                    move.append(priority_moves[0] if priority_moves else valid_moves[0])
+
             elif choices == 2:  # Ramsay-style
                 valid_moves = get_valid_ramsay(cards)
                 if valid_moves:
@@ -430,37 +445,7 @@ def get_move(cards, player1, player2, companion_cards=None, choose_companion=Tru
                         house for house in houses 
                         if abs(current_banners.get(house, 0) - opponent_banners.get(house, 0)) <= 1
                     ]
-
-                    # 3. Prioritize middle positions in overcrowded areas (16,17,22,23 in 6x6 grid)
-                    middle_positions = {16, 17, 22, 23}
-                    strategic_moves = []
-                    
-                    # First priority: Middle positions in overcrowded areas for contested houses
-                    strategic_moves += [
-                        loc for loc in overcrowded 
-                        if loc in middle_positions and 
-                        any(card.get_house() in contested_houses for card in cards if card.get_location() == loc)
-                    ]
-                    
-                    # Second priority: Other overcrowded positions for contested houses
-                    strategic_moves += [
-                        loc for loc in overcrowded 
-                        if any(card.get_house() in contested_houses for card in cards if card.get_location() == loc)
-                    ]
-                    
-                    # Third priority: Remaining middle positions
-                    strategic_moves += [loc for loc in valid_moves if loc in middle_positions]
-                    
-                    # Remove duplicates and ensure valid moves
                     final_moves = []
-                    seen = set()
-                    for loc in strategic_moves + valid_moves:  # Fallback to all valid moves
-                        if loc not in seen and loc in valid_moves:
-                            seen.add(loc)
-                            final_moves.append(loc)
-                        if len(final_moves) >= 2:
-                            break
-
                     # Select top 2 prioritized moves
                     if len(final_moves) >= 2:
                         move.extend(final_moves[:2])
