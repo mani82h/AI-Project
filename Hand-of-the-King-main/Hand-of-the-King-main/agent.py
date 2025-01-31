@@ -335,8 +335,7 @@ def get_move(cards, player1, player2, companion_cards=None, choose_companion=Tru
                 for companion in companion_cards.keys()
             }
 
-            if nearly_secured_rows + nearly_secured_cols > 0:
-              if 'Melisandre' in companion_weights: 
+            if 'Melisandre' in companion_weights: 
                 companion_weights['Melisandre'] += 50 * \
                     (nearly_secured_rows + nearly_secured_cols)
 
